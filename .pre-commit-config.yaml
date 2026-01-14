@@ -16,7 +16,6 @@ repos:
 
   - repo: local
     hooks:
-      # 快速检查放前面
       - id: typos
         name: typos
         description: Check typos in the codebase
@@ -56,7 +55,6 @@ repos:
         files: \.rs$
         pass_filenames: false
 
-      # 慢速检查放最后
       - id: cargo-test
         name: cargo test
         description: Run unit tests for the project
