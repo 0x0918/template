@@ -24,32 +24,53 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
+
       - name: Install Rust
-        run: rustup toolchain install stable --component llvm-tools-preview
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
-      - name: install nextest
-        uses: taiki-e/install-action@nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Install nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
       - uses: Swatinem/rust-cache@v2
+
       - name: Check code format
         run: cargo fmt -- --check
+
       - name: Check the package for errors
         run: cargo check --all
+
       - name: Lint rust sources
         run: cargo clippy --all-targets --all-features --tests --benches -- -D warnings
+
       - name: Execute rust tests
         run: cargo nextest run --all-features
+
       - name: Generate a changelog
-        uses: orhun/git-cliff-action@v2
         id: git-cliff
         if: startsWith(github.ref, 'refs/tags/')
-        with:
-          config: cliff.toml
-          args: -vv --latest --strip header
-        env:
-          OUTPUT: CHANGES.md
+        run: |
+          git-cliff -vv --latest --strip header -c cliff.toml -o CHANGES.md
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGES.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           body: ${{ steps.git-cliff.outputs.content }}
+          files: CHANGES.md
