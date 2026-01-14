@@ -1,61 +1,66 @@
 fail_fast: false
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v6.0.0
     hooks:
       - id: check-byte-order-marker
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-symlinks
       - id: check-yaml
+      - id: check-toml
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace
-  - repo: https://github.com/psf/black
-    rev: 22.10.0
-    hooks:
-      - id: black
+      - id: detect-private-key
+
   - repo: local
     hooks:
-      - id: cargo-fmt
-        name: cargo fmt
-        description: Format files with rustfmt.
-        entry: bash -c 'cargo fmt -- --check'
-        language: rust
-        files: \.rs$
-        args: []
-      - id: cargo-deny
-        name: cargo deny check
-        description: Check cargo dependencies
-        entry: bash -c 'cargo deny check -d'
-        language: rust
-        files: \.rs$
-        args: []
+      # 快速检查放前面
       - id: typos
         name: typos
-        description: check typo
-        entry: bash -c 'typos'
-        language: rust
-        files: \.*$
+        description: Check typos in the codebase
+        entry: typos
+        language: system
         pass_filenames: false
+
+      - id: cargo-fmt
+        name: cargo fmt
+        description: Format Rust files with rustfmt
+        entry: cargo fmt -- --check
+        language: system
+        files: \.rs$
+        pass_filenames: false
+
+      - id: cargo-deny
+        name: cargo deny
+        description: Check cargo dependencies for security/license issues
+        entry: cargo deny check -d
+        language: system
+        files: (Cargo\.toml|Cargo\.lock)$
+        pass_filenames: false
+
       - id: cargo-check
         name: cargo check
-        description: Check the package for errors.
-        entry: bash -c 'cargo check --all'
-        language: rust
+        description: Check the package for errors
+        entry: cargo check --all
+        language: system
         files: \.rs$
         pass_filenames: false
+
       - id: cargo-clippy
         name: cargo clippy
-        description: Lint rust sources
-        entry: bash -c 'cargo clippy --all-targets --all-features --tests --benches -- -D warnings'
-        language: rust
+        description: Lint Rust sources with Clippy
+        entry: cargo clippy --all-targets --all-features --tests --benches -- -D warnings
+        language: system
         files: \.rs$
         pass_filenames: false
+
+      # 慢速检查放最后
       - id: cargo-test
         name: cargo test
-        description: unit test for the project
-        entry: bash -c 'cargo nextest run --all-features'
-        language: rust
+        description: Run unit tests for the project
+        entry: cargo nextest run --all-features
+        language: system
         files: \.rs$
         pass_filenames: false
